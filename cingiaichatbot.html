@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Widget</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Chat Button */
+        #chatButton {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #D4AF37 0%, #F4D03F 100%);
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        #chatButton:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(212, 175, 55, 0.6);
+        }
+
+        #chatButton svg {
+            width: 28px;
+            height: 28px;
+            fill: #1a1a1a;
+        }
+
+        /* Welcome Tooltip */
+        #welcomeTooltip {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            max-width: 280px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease;
+            z-index: 999;
+            pointer-events: none;
+            border: 2px solid #D4AF37;
+        }
+
+        #welcomeTooltip.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #welcomeTooltip::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            right: 20px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid white;
+        }
+
+        #welcomeTooltip p {
+            color: #1a1a1a;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* Disclaimer Modal */
+        #disclaimerModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+            padding: 20px;
+        }
+
+        #disclaimerModal.active {
+            display: flex;
+        }
+
+        .disclaimer-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: modalSlideUp 0.3s ease;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .disclaimer-header {
+            background: linear-gradient(135deg, #D4AF37 0%, #F4D03F 100%);
+            color: #1a1a1a;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .disclaimer-header h2 {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .disclaimer-body {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .disclaimer-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .disclaimer-body::-webkit-scrollbar-track {
+            background: #f5f5f5;
+        }
+
+        .disclaimer-body::-webkit-scrollbar-thumb {
+            background: #D4AF37;
+            border-radius: 3px;
+        }
+
+        .disclaimer-text {
+            color: #4a4a4a;
+            line-height: 1.8;
+            margin-bottom: 25px;
+            text-align: justify;
+        }
+
+        .disclaimer-text h3 {
+            color: #1a1a1a;
+            margin: 20px 0 10px 0;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .disclaimer-text ul {
+            margin: 10px 0 10px 20px;
+        }
+
+        .disclaimer-text li {
+            margin-bottom: 8px;
+        }
+
+        .disclaimer-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin: 25px 0;
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            transition: border-color 0.2s;
+        }
+
+        .disclaimer-checkbox:has(input:checked) {
+            border-color: #D4AF37;
+            background: #fffef8;
+        }
+
+        .disclaimer-checkbox input[type="checkbox"] {
+            margin-top: 3px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #D4AF37;
+        }
+
+        .disclaimer-checkbox label {
+            cursor: pointer;
+            color: #1a1a1a;
+            font-size: 15px;
+            line-height: 1.6;
+            user-select: none;
+        }
+
+        .disclaimer-actions {
+            padding: 20px 30px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .disclaimer-btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .disclaimer-btn.cancel {
+            background: #e0e0e0;
+            color: #4a4a4a;
+        }
+
+        .disclaimer-btn.cancel:hover {
+            background: #d0d0d0;
+        }
+
+        .disclaimer-btn.accept {
+            background: linear-gradient(135deg, #D4AF37 0%, #F4D03F 100%);
+            color: #1a1a1a;
+        }
+
+        .disclaimer-btn.accept:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .disclaimer-btn.accept:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Chat Window */
+        #chatWindow {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 380px;
+            height: 550px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 999;
+            animation: slideUp 0.3s ease;
+            border: 2px solid #D4AF37;
+        }
+
+        #chatWindow.active {
+            display: flex;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #D4AF37 0%, #F4D03F 100%);
+            color: #1a1a1a;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h3 {
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #1a1a1a;
+            font-size: 24px;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .close-btn:hover {
+            background: rgba(26, 26, 26, 0.1);
+        }
+
+        #messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #fafafa;
+        }
+
+        #messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #messages::-webkit-scrollbar-track {
+            background: #f5f5f5;
+        }
+
+        #messages::-webkit-scrollbar-thumb {
+            background: #D4AF37;
+            border-radius: 3px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #D4AF37 0%, #F4D03F 100%);
+            color: #1a1a1a;
+            border-bottom-right-radius: 4px;
+            font-weight: 500;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #1a1a1a;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+        }
+
+        .message.error .message-content {
+            background: #ffe6e6;
+            color: #c53030;
+            border-left: 3px solid #f56565;
+        }
+
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #userInput:focus {
+            border-color: #D4AF37;
+        }
+
+        #sendButton {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #D4AF37 0%, #F4D03F 100%);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        #sendButton:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        #sendButton:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        #sendButton svg {
+            width: 20px;
+            height: 20px;
+            fill: #1a1a1a;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            width: fit-content;
+            border: 1px solid #e0e0e0;
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background: #D4AF37;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #chatWindow {
+                width: calc(100vw - 40px);
+                height: calc(100vh - 140px);
+                right: 20px;
+                bottom: 90px;
+            }
+
+            #chatButton {
+                bottom: 20px;
+                right: 20px;
+                width: 55px;
+                height: 55px;
+            }
+
+            #welcomeTooltip {
+                bottom: 85px;
+                right: 20px;
+                max-width: calc(100vw - 100px);
+            }
+
+            .disclaimer-content {
+                max-height: 95vh;
+            }
+
+            .disclaimer-body {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Tooltip -->
+    <div id="welcomeTooltip">
+        <p>👋 Ben avukatınızın dijital asistanıyım. Size nasıl yardımcı olabilirim?</p>
+    </div>
+
+    <!-- Chat Button -->
+    <button id="chatButton" aria-label="Chat'i Aç">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+        </svg>
+    </button>
+
+    <!-- Disclaimer Modal -->
+    <div id="disclaimerModal">
+        <div class="disclaimer-content">
+            <div class="disclaimer-header">
+                <h2>Sorumluluk Reddi Beyanı</h2>
+                <p style="font-size: 14px; margin-top: 5px; opacity: 0.9;">Lütfen kullanım şartlarını okuyunuz</p>
+            </div>
+            
+            <div class="disclaimer-body">
+                <div class="disclaimer-text">
+                    <p>
+                        Bu dijital asistan hizmetini kullanmadan önce, lütfen aşağıdaki sorumluluk reddi beyanını dikkatlice okuyunuz:
+                    </p>
+
+                    <h3>1. Hizmetin Niteliği</h3>
+                    <p>
+                        Bu dijital asistan, genel hukuki bilgi ve yönlendirme sağlamak amacıyla tasarlanmıştır. 
+                        Sağlanan bilgiler kesinlikle profesyonel hukuki danışmanlık yerine geçmez ve bu şekilde 
+                        değerlendirilmemelidir.
+                    </p>
+
+                    <h3>2. Profesyonel Danışmanlık Gerekliliği</h3>
+                    <ul>
+                        <li>Asistan tarafından verilen yanıtlar genel bilgilendirme amaçlıdır</li>
+                        <li>Somut hukuki durumunuz için mutlaka avukatınızla görüşmelisiniz</li>
+                        <li>Hukuki işlem yapmadan önce profesyonel danışmanlık alınmalıdır</li>
+                    </ul>
+
+                    <h3>3. Sorumluluk Sınırlaması</h3>
+                    <p>
+                        Büromuz, dijital asistan tarafından verilen bilgilere dayanılarak alınan kararlar veya 
+                        yapılan işlemlerden kaynaklanan herhangi bir zarar veya kayıptan sorumlu tutulamaz.
+                    </p>
+
+                    <h3>4. Gizlilik ve Veri Güvenliği</h3>
+                    <p>
+                        Lütfen dijital asistana kişisel, hassas veya gizli bilgiler paylaşmayınız. 
+                        Konuşmalar kayıt altına alınabilir ve hizmet kalitesini artırmak için kullanılabilir.
+                    </p>
+
+                    <h3>5. Kullanım Şartlarının Kabulü</h3>
+                    <p>
+                        Bu hizmeti kullanarak, yukarıdaki sorumluluk reddi şartlarını okuduğunuzu, 
+                        anladığınızı ve kabul ettiğinizi beyan etmiş olursunuz.
+                    </p>
+                </div>
+
+                <div class="disclaimer-checkbox">
+                    <input type="checkbox" id="acceptDisclaimer" />
+                    <label for="acceptDisclaimer">
+                        Yukarıdaki sorumluluk reddi beyanını okudum, anladım ve kabul ediyorum. 
+                        Bu dijital asistanın profesyonel hukuki danışmanlık yerine geçmediğini biliyorum.
+                    </label>
+                </div>
+            </div>
+
+            <div class="disclaimer-actions">
+                <button class="disclaimer-btn cancel" id="cancelDisclaimer">İptal</button>
+                <button class="disclaimer-btn accept" id="acceptDisclaimerBtn" disabled>Kabul Et ve Devam Et</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Window -->
+    <div id="chatWindow">
+        <div class="chat-header">
+            <h3>Dijital Asistan</h3>
+            <button class="close-btn" id="closeButton" aria-label="Kapat">×</button>
+        </div>
+        
+        <div id="messages">
+            <div class="message bot">
+                <div class="message-content">
+                    Merhaba! Size nasıl yardımcı olabilirim?
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input">
+            <input 
+                type="text" 
+                id="userInput" 
+                placeholder="Mesajınızı yazın..." 
+                autocomplete="off"
+            />
+            <button id="sendButton" aria-label="Gönder">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const chatButton = document.getElementById('chatButton');
+        const chatWindow = document.getElementById('chatWindow');
+        const closeButton = document.getElementById('closeButton');
+        const sendButton = document.getElementById('sendButton');
+        const userInput = document.getElementById('userInput');
+        const messagesDiv = document.getElementById('messages');
+        const welcomeTooltip = document.getElementById('welcomeTooltip');
+        const disclaimerModal = document.getElementById('disclaimerModal');
+        const acceptCheckbox = document.getElementById('acceptDisclaimer');
+        const acceptBtn = document.getElementById('acceptDisclaimerBtn');
+        const cancelBtn = document.getElementById('cancelDisclaimer');
+        
+        // Session management
+        const sessionKey = "chingihukuk_chat_session";
+        const disclaimerKey = "chingihukuk_disclaimer_accepted";
+        let sessionId = localStorage.getItem(sessionKey);
+        if (!sessionId) {
+            sessionId = "sess_" + Math.random().toString(36).substring(2, 10);
+            localStorage.setItem(sessionKey, sessionId);
+        }
+
+        const WEBHOOK_URL = 'https://6xhdo5yp.rpcld.app/webhook-test/956d02d4-82d7-4128-8317-b0efa7b89303';
+
+        // Welcome tooltip - 2 saniye sonra göster, 5 saniye sonra gizle
+        setTimeout(() => {
+            welcomeTooltip.classList.add('show');
+            setTimeout(() => {
+                welcomeTooltip.classList.remove('show');
+            }, 5000);
+        }, 2000);
+
+        // Chat button click - önce disclaimer kontrolü
+        chatButton.addEventListener('click', () => {
+            const disclaimerAccepted = localStorage.getItem(disclaimerKey);
+            
+            if (disclaimerAccepted === 'true') {
+                openChat();
+            } else {
+                disclaimerModal.classList.add('active');
+            }
+        });
+
+        // Disclaimer checkbox
+        acceptCheckbox.addEventListener('change', (e) => {
+            acceptBtn.disabled = !e.target.checked;
+        });
+
+        // Disclaimer kabul
+        acceptBtn.addEventListener('click', () => {
+            localStorage.setItem(disclaimerKey, 'true');
+            disclaimerModal.classList.remove('active');
+            openChat();
+        });
+
+        // Disclaimer iptal
+        cancelBtn.addEventListener('click', () => {
+            disclaimerModal.classList.remove('active');
+            acceptCheckbox.checked = false;
+            acceptBtn.disabled = true;
+        });
+
+        // Modal dışına tıklanınca kapat
+        disclaimerModal.addEventListener('click', (e) => {
+            if (e.target === disclaimerModal) {
+                disclaimerModal.classList.remove('active');
+                acceptCheckbox.checked = false;
+                acceptBtn.disabled = true;
+            }
+        });
+
+        // Chat'i aç
+        function openChat() {
+            chatWindow.classList.add('active');
+            userInput.focus();
+        }
+
+        // Chat'i kapat
+        closeButton.addEventListener('click', () => {
+            chatWindow.classList.remove('active');
+        });
+
+        // Mesaj gönder
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, 'user');
+            userInput.value = '';
+            sendButton.disabled = true;
+
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'message bot';
+            typingIndicator.innerHTML = `
+                <div class="typing-indicator active">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            messagesDiv.appendChild(typingIndicator);
+            scrollToBottom();
+
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        sessionId: sessionId,
+                        message: message,
+                        query: message,
+                        text: message,
+                        userMessage: message,
+                        input: message
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const responseText = await response.text();
+                typingIndicator.remove();
+
+                if (!responseText || responseText.trim() === '') {
+                    addMessage('Yanıt alınamadı. Lütfen tekrar deneyin.', 'error');
+                    return;
+                }
+
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (jsonError) {
+                    addMessage(responseText, 'bot');
+                    return;
+                }
+
+                let botMessage = data.output || data.response || data.message || data.reply || 
+                                data.text || data.answer || data.result || JSON.stringify(data);
+
+                addMessage(botMessage, 'bot');
+                
+            } catch (error) {
+                console.error('Hata:', error);
+                typingIndicator.remove();
+                addMessage('Bağlantı hatası oluştu. Lütfen tekrar deneyin.', 'error');
+            }
+
+            sendButton.disabled = false;
+            userInput.focus();
+        }
+
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.innerHTML = `<div class="message-content">${escapeHtml(text)}</div>`;
+            messagesDiv.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML.replace(/\n/g, '<br>');
+        }
+
+        function scrollToBottom() {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        userInput.addEventListener('input', () => {
+            sendButton.disabled = !userInput.value.trim();
+        });
+    </script>
+</body>
+</html>

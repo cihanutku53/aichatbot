@@ -261,23 +261,7 @@
         }
 
         /* Chat Window */
-        #chatWindow {
-            position: fixed;
-            bottom: 100px;
-            right: 30px;
-            width: 380px;
-            height: 450px;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-            z-index: 999;
-            animation: slideUp 0.3s ease;
-            border: 2px solid #D4AF37;
-        }
-
+         #chatWindow { position: fixed; bottom: 100px; right: 30px; width: 380px; height: 350px; background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); display: none; flex-direction: column; overflow: hidden; z-index: 999; animation: slideUp 0.3s ease; border: 2px solid #D4AF37; }
         #chatWindow.active {
             display: flex;
         }
@@ -602,17 +586,18 @@
     <!-- Chat Window -->
     <div id="chatWindow">
         <div class="chat-header">
-            <h3>ÇingiAI Asistan</h3>
+            <h3>Çingi Hukuk Asistan</h3>
             <button class="close-btn" id="closeButton" aria-label="Kapat">×</button>
         </div>
         
         <div id="messages">
             <div class="message bot">
                 <div class="message-content">
-                    Merhaba! Size nasıl yardımcı olabilirim?
+                    Merhaba! Ben Çingi Hukuk Asistanıyım. Bana anlatmadan önce isminizi ve soyisiminizi öğrenebilir miyim.
                 </div>
             </div>
         </div>
+       
         
         <div class="chat-input">
             <input 
@@ -651,7 +636,7 @@
             localStorage.setItem(sessionKey, sessionId);
         }
 
-        const WEBHOOK_URL = 'https://6xhdo5yp.rpcld.app/webhook/956d02d4-82d7-4128-8317-b0efa7b89303';
+        const WEBHOOK_URL = 'https://yv01awbz.rpcld.app/webhook/4448ecf0-8d95-4c14-ab64-89fb14f1c6a5';
 
         // Welcome tooltip - 2 saniye sonra göster, 5 saniye sonra gizle
         setTimeout(() => {

@@ -491,35 +491,74 @@
         }
 
         /* Responsive */
-        @media (max-width: 768px) {
-            #chatWindow {
-                width: calc(100vw - 40px);
-                height: calc(100vh - 140px);
-                right: 20px;
-                bottom: 90px;
-            }
+        /* Responsive */
+@media (max-width: 768px) {
+    #chatWindow {
+        position: fixed;
+        width: 90vw;                  /* ekran genişliğinin %90’ı */
+        height: 70vh;                 /* ekran yüksekliğinin %70’i */
+        right: 5vw;                   /* kenarlardan eşit boşluk */
+        bottom: 100px;                /* butonla çakışmayı önle */
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+        transition: all 0.3s ease;
+    }
 
-            #chatButton {
-                bottom: 20px;
-                right: 20px;
-                width: 55px;
-                height: 55px;
-            }
+    #chatButton {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        transition: transform 0.2s ease;
+    }
 
-            #welcomeTooltip {
-                bottom: 85px;
-                right: 20px;
-                max-width: calc(100vw - 100px);
-            }
+    #chatButton:active {
+        transform: scale(0.95);
+    }
 
-            .disclaimer-content {
-                max-height: 95vh;
-            }
+    #welcomeTooltip {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        max-width: 80vw;
+        background-color: #fff;
+        border-radius: 10px;
+        padding: 10px 14px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+        font-size: 14px;
+        line-height: 1.4;
+    }
 
-            .disclaimer-body {
-                padding: 20px;
-            }
-        }
+    .disclaimer-content {
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .disclaimer-body {
+        padding: 16px;
+    }
+
+    /* Ek iyileştirme: mobilde yazı alanını daha büyük yap */
+    #chatWindow input[type="text"], 
+    #chatWindow textarea {
+        font-size: 16px;
+        padding: 10px;
+        border-radius: 10px;
+        width: calc(100% - 20px);
+    }
+
+    /* Chat balonlarının daha rahat görünmesi için */
+    .chat-message {
+        font-size: 15px;
+        line-height: 1.5;
+        word-wrap: break-word;
+    }
+}
+
     </style>
 </head>
 <body>
